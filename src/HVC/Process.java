@@ -17,14 +17,16 @@ public class Process implements ProcessRMI {
     ArrayList<ArrayList<Integer>> vc;
     ProcessGroup parent;
     ProcessGroup self;
+    int height;
+    boolean initialized = false;
 
-    public Process(int id, int localIdx, String[] peers, int[] ports, int height, ProcessGroup parent, int level){
+    public Process(int id, int localIdx, String[] peers, int[] ports, int height){
         this.id = id;
         this.localIdx = localIdx;
         this.peers = peers;
         this.ports = ports;
-        this.parent = parent;
-        this.self = new ProcessGroup(id, level, (ProcessGroup[]) null);
+        this.height = height;
+        this.self = new ProcessGroup(id, 1, (ArrayList<ProcessGroup>) null);
         vc = new ArrayList<ArrayList<Integer>>(height);
 
         ProcessGroup next = parent;
@@ -44,6 +46,7 @@ public class Process implements ProcessRMI {
     }
 
     public Message Send(int id) {
+        assert(this.initialized);
         Process dest;
         try {
             Registry registry = LocateRegistry.getRegistry(this.ports[id]);
@@ -77,6 +80,7 @@ public class Process implements ProcessRMI {
     }
 
     public void Receive(Message m) {
+        assert(this.initialized);
         int idx = vc.size() - m.clock.size();
         for (ArrayList<Integer> arr : m.clock) {
             int nodeIdx = 0;
@@ -89,6 +93,7 @@ public class Process implements ProcessRMI {
     }
 
     public void InternalEvent() {
+        assert(this.initialized);
         this.vc.get(0).set(this.id, this.vc.get(0).get(this.localIdx) + 1);
     }
 
@@ -115,5 +120,15 @@ public class Process implements ProcessRMI {
             }
         }
         return dist;
+    }
+
+    public void setParentAndInitialize(ProcessGroup p) {
+        this.parent = p;
+        ProcessGroup next = parent;
+        for (int i = 0; i < height; i++) {
+            vc.set(i, new ArrayList<Integer>(next.groupSize()));
+            next = next.parent;
+        }
+        this.initialized = true;
     }
 }

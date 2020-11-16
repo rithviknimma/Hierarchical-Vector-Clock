@@ -1,13 +1,15 @@
 package HVC;
 
+import java.util.*;
+
 public class ProcessGroup {
 
-    ProcessGroup[] processGroups;
+    ArrayList<ProcessGroup> processGroups;
     int id;
     int level;
     ProcessGroup parent;
 
-    public ProcessGroup(int id, int level, ProcessGroup[] processGroups) {
+    public ProcessGroup(int id, int level, ArrayList<ProcessGroup> processGroups) {
         this.id = id;
         this.level = level;
         this.processGroups = processGroups;
@@ -18,6 +20,6 @@ public class ProcessGroup {
     }
 
     public int groupSize() {
-        return this.processGroups.length;
+        return this.processGroups.size();
     }
 }
