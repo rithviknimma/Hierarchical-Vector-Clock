@@ -92,7 +92,7 @@ public class Process implements ProcessRMI {
         this.vc.get(0).set(this.id, this.vc.get(0).get(this.localIdx) + 1);
     }
 
-    public Process getProcess() {
+    public Process GetProcess() {
         return this;
     }
 
