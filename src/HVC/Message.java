@@ -1,10 +1,12 @@
 package HVC;
 
+import java.util.*;
+
 public class Message {
-    int[] clock;
+    ArrayList<ArrayList<Integer>> clock;
     int sender;
 
-    public Message(int[] clock, int sender) {
+    public Message(ArrayList<ArrayList<Integer>> clock, int sender) {
         this.clock = clock;
         this.sender = sender;
     }
