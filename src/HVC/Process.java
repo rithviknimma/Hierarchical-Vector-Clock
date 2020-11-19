@@ -26,7 +26,7 @@ public class Process implements ProcessRMI {
         this.peers = peers;
         this.ports = ports;
         this.height = height;
-        this.self = new ProcessGroup(id, 1, (ArrayList<ProcessGroup>) null);
+        this.self = new ProcessGroup(id, 1, 0, (ArrayList<ProcessGroup>) null);
         vc = new ArrayList<ArrayList<Integer>>(height);
 
         ProcessGroup next = parent;
@@ -55,14 +55,14 @@ public class Process implements ProcessRMI {
         } catch (Exception e) {
             return null;
         }
-        int hDist = calculateHierarchicalDistance(this, dest);
+        int[] hDistAndIndex = calculateHierarchicalDistanceAndIndex(this, dest);
         Message m;
-        if (hDist != 1) {
-            ArrayList<ArrayList<Integer>> mClock = new ArrayList<>(this.vc.size() - hDist + 1);
-            mClock.set(0, this.vc.get(hDist-1));
-            mClock.get(0).set(localIdx, this.vc.get(0).get(localIdx));
-            for (int i = 1; i < this.vc.size() - hDist + 1; i++) {
-                mClock.set(i, this.vc.get(hDist-1+i));
+        if (hDistAndIndex[0] != 1) {
+            ArrayList<ArrayList<Integer>> mClock = new ArrayList<>(this.vc.size() - hDistAndIndex[0] + 1);
+            mClock.set(0, this.vc.get(hDistAndIndex[0]-1));
+            mClock.get(0).set(hDistAndIndex[1], this.vc.get(0).get(this.localIdx));
+            for (int i = 1; i < this.vc.size() - hDistAndIndex[0] + 1; i++) {
+                mClock.set(i, this.vc.get(hDistAndIndex[0]-1+i));
             }
             m = new Message(mClock, this.id);
         }
@@ -101,25 +101,25 @@ public class Process implements ProcessRMI {
         return this;
     }
 
-    public int calculateHierarchicalDistance(Process sender, Process receiver) {
-        int dist = 0;
-        if (sender.self.id == sender.self.id) {
-            return dist;
-        }
-        dist = 1;
+    public int[] calculateHierarchicalDistanceAndIndex(Process sender, Process receiver) {
+        assert (sender.self.id != receiver.self.id);
+        int dist = 1;
+        int idx = sender.localIdx;
         if (sender.parent.id == receiver.parent.id) {
-            return dist;
+            return new int[] {dist, idx};
         }
         else {
             ProcessGroup a = sender.parent;
+            idx = a.localIdx;
             ProcessGroup b = receiver.parent;
             while (a.parent.id != b.parent.id) {
                 dist++;
                 a = a.parent;
                 b = b.parent;
+                idx = a.localIdx;
             }
         }
-        return dist;
+        return new int[]{dist, idx};
     }
 
     public void setParentAndInitialize(ProcessGroup p) {

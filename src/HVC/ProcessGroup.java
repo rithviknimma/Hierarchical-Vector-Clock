@@ -7,11 +7,13 @@ public class ProcessGroup {
     ArrayList<ProcessGroup> processGroups;
     int id;
     int level;
+    int localIdx;
     ProcessGroup parent;
 
-    public ProcessGroup(int id, int level, ArrayList<ProcessGroup> processGroups) {
+    public ProcessGroup(int id, int level, int localIdx, ArrayList<ProcessGroup> processGroups) {
         this.id = id;
         this.level = level;
+        this.localIdx = localIdx;
         this.processGroups = processGroups;
     }
 
