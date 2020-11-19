@@ -10,15 +10,23 @@ public class ProcessGroup {
     int localIdx;
     ProcessGroup parent;
 
-    public ProcessGroup(int id, int level, int localIdx, ArrayList<ProcessGroup> processGroups) {
+    public ProcessGroup(int id, int level, ArrayList<ProcessGroup> processGroups) {
         this.id = id;
         this.level = level;
-        this.localIdx = localIdx;
-        this.processGroups = processGroups;
+        this.processGroups = new ArrayList<>();
+        if (processGroups != null) {
+            for (ProcessGroup pg : processGroups) {
+                this.processGroups.add(pg);
+            }
+        }
     }
 
     public void setParent(ProcessGroup p) {
         this.parent = p;
+    }
+
+    public void setLocalIdx(int i) {
+        this.localIdx = i;
     }
 
     public int groupSize() {

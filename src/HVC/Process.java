@@ -26,14 +26,8 @@ public class Process implements ProcessRMI {
         this.peers = peers;
         this.ports = ports;
         this.height = height;
-        this.self = new ProcessGroup(id, 1, 0, (ArrayList<ProcessGroup>) null);
+        this.self = new ProcessGroup(id, 1, (ArrayList<ProcessGroup>) null);
         vc = new ArrayList<ArrayList<Integer>>(height);
-
-        ProcessGroup next = parent;
-        for (int i = 0; i < height; i++) {
-            vc.set(i, new ArrayList<Integer>(next.groupSize()));
-            next = next.parent;
-        }
 
         try {
             System.setProperty("java.rmi.hostname", this.peers[this.id]);
@@ -122,13 +116,21 @@ public class Process implements ProcessRMI {
         return new int[]{dist, idx};
     }
 
-    public void setParentAndInitialize(ProcessGroup p) {
+    public void setParent(ProcessGroup p) {
         this.parent = p;
-        ProcessGroup next = parent;
+    }
+
+    public void initializeClock() {
+        System.out.println("ProcessID: " + this.id);
+        ProcessGroup current = this.parent;
         for (int i = 0; i < height; i++) {
-            vc.set(i, new ArrayList<Integer>(next.groupSize()));
-            next = next.parent;
+            vc.add(new ArrayList<Integer>(current.groupSize()));
+            for (int j = 0; j < current.groupSize(); j++) {
+                vc.get(i).add(0);
+            }
+            current = current.parent;
         }
+        //System.out.println(vc);
         this.initialized = true;
     }
 }
