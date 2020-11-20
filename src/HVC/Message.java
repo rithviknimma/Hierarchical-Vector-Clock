@@ -4,11 +4,11 @@ import java.util.*;
 
 public class Message {
     ArrayList<ArrayList<Integer>> clock;
-    int sender;
+    Object value;
 
-    public Message(ArrayList<ArrayList<Integer>> clock, int sender) {
+    public Message(ArrayList<ArrayList<Integer>> clock, Object value) {
         this.clock = clock;
-        this.sender = sender;
+        this.value = value;
     }
 
 }

@@ -89,23 +89,29 @@ public class HVCTest {
         return processes;
     }
 
+    private void printProcess(Process[] processes) {
+        for(Process p : processes) {
+            System.out.println("Process ID: " + p.id + ", Final HVC: " + p.vc);
+        }
+
+    }
+
     private Message transmitMessage (Process sender, Process receiver) {
-        Message m = sender.Send(receiver);
+        Message m = sender.Send(receiver, "DefaultValue");
         receiver.Receive(m);
         return m;
     }
 
-    private boolean happenedBefore(ArrayList<ArrayList<Integer>> clockA, ArrayList<ArrayList<Integer>> clockB, int hDist, int localIdx) {
+    private boolean happenedBefore(ArrayList<ArrayList<Integer>> clockA, ArrayList<ArrayList<Integer>> clockB, int hDist) {
         assert (clockA.size() == clockB.size());
-        for (int i = clockA.size() - 1; i > hDist; i--) {
+        for (int i = clockA.size() - 1; i >= hDist; i--) {
             for (int j = 0; j < clockA.get(i).size(); j++) {
                 if(clockA.get(i).get(j) > clockB.get(i).get(j)) {
                     return false;
                 }
             }
         }
-        //todo: happenedBefore logic with localidx
-        if (clockA.get(0).get(localIdx))
+
         return true;
     }
 
@@ -128,6 +134,8 @@ public class HVCTest {
         clockB = processes[4].vc;
         processes[3].InternalEvent();
         transmitMessage(processes[3], processes[4]);
+
+        printProcess(processes);
 
         assert happenedBefore(clockA, clockB, processes[0].calculateHierarchicalDistanceAndIndex(processes[0], processes[4])[0]);
     }
@@ -167,12 +175,10 @@ public class HVCTest {
         transmitMessage(processes[3], processes[0]);
         processes[7].InternalEvent();
 
-        for(Process p : processes) {
-            System.out.println("Process ID: " + p.id + ", HVC: " + p.vc);
-        }
+        printProcess(processes);
 
-        assert(happenedBefore(processes[1].vc, processes[0].vc, 1, processes[1].localIdx));
-        assert(happenedBefore(processes[6].vc, processes[4].vc, 2, processes[6].localIdx));
+        assert(happenedBefore(processes[1].vc, processes[0].vc, 1));
+        assert(happenedBefore(processes[6].vc, processes[4].vc, 2));
     }
 }
 

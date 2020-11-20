@@ -2,8 +2,7 @@ package HVC;
 
 
 public interface ProcessInterface {
-    Message Send(Process p);
+    Message Send(Process p, Object value);
     void Receive(Message m);
     void InternalEvent();
-    Process GetProcess();
 }

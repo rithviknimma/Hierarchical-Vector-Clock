@@ -21,12 +21,14 @@ public class Process implements ProcessInterface {
         this.localIdx = localIdx;
         this.height = height;
         this.self = new ProcessGroup(id, 1, (ArrayList<ProcessGroup>) null);
+        this.self.setLocalIdx(localIdx);
         vc = new ArrayList<ArrayList<Integer>>(height);
 
     }
 
-    public Message Send(Process dest) {
+    public Message Send(Process dest, Object value) {
         assert(this.initialized);
+        assert(dest != this);
         this.vc.get(0).set(this.localIdx, this.vc.get(0).get(this.localIdx) + 1);
         int[] hDistAndIndex = calculateHierarchicalDistanceAndIndex(this, dest);
         Message m;
@@ -51,10 +53,10 @@ public class Process implements ProcessInterface {
                     mClock.get(i).add(j);
                 }
             }
-            m = new Message(mClock, this.id);
+            m = new Message(mClock, value);
         }
         else {
-            m = new Message(this.vc, this.id);
+            m = new Message(this.vc, value);
         }
         return m;
     }
@@ -76,10 +78,6 @@ public class Process implements ProcessInterface {
     public void InternalEvent() {
         assert(this.initialized);
         this.vc.get(0).set(this.localIdx, this.vc.get(0).get(this.localIdx) + 1);
-    }
-
-    public Process GetProcess() {
-        return this;
     }
 
     public int[] calculateHierarchicalDistanceAndIndex(Process sender, Process receiver) {
