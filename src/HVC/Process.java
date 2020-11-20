@@ -3,72 +3,58 @@ import java.util.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.registry.Registry;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
-public class Process implements ProcessRMI {
-
-    Registry registry;
-    ProcessRMI stub;
+public class Process implements ProcessInterface {
 
     int id;
     int localIdx;
-    String[] peers;
-    int[] ports;
     ArrayList<ArrayList<Integer>> vc;
     ProcessGroup parent;
     ProcessGroup self;
     int height;
     boolean initialized = false;
 
-    public Process(int id, int localIdx, String[] peers, int[] ports, int height){
+    public Process(int id, int localIdx, int height){
         this.id = id;
         this.localIdx = localIdx;
-        this.peers = peers;
-        this.ports = ports;
         this.height = height;
         this.self = new ProcessGroup(id, 1, (ArrayList<ProcessGroup>) null);
         vc = new ArrayList<ArrayList<Integer>>(height);
 
-        try {
-            System.setProperty("java.rmi.hostname", this.peers[this.id]);
-            this.registry = LocateRegistry.createRegistry(this.ports[this.id]);
-            this.stub = (ProcessRMI) UnicastRemoteObject.exportObject(this, this.ports[this.id]);
-            this.registry.rebind("Process", stub);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
-    public Message Send(int id) {
+    public Message Send(Process dest) {
         assert(this.initialized);
-        Process dest;
-        try {
-            Registry registry = LocateRegistry.getRegistry(this.ports[id]);
-            stub = (ProcessRMI) registry.lookup("Process");
-            dest = stub.GetProcess();
-        } catch (Exception e) {
-            return null;
-        }
+        this.vc.get(0).set(this.localIdx, this.vc.get(0).get(this.localIdx) + 1);
         int[] hDistAndIndex = calculateHierarchicalDistanceAndIndex(this, dest);
         Message m;
         if (hDistAndIndex[0] != 1) {
             ArrayList<ArrayList<Integer>> mClock = new ArrayList<>(this.vc.size() - hDistAndIndex[0] + 1);
-            mClock.set(0, this.vc.get(hDistAndIndex[0]-1));
-            mClock.get(0).set(hDistAndIndex[1], this.vc.get(0).get(this.localIdx));
+            ArrayList<Integer> row = new ArrayList<>();
+            for (Integer i : this.vc.get(hDistAndIndex[0]-1)) {
+                row.add(i);
+            }
+            row.set(hDistAndIndex[1], this.vc.get(0).get(this.localIdx));
+            mClock.add(new ArrayList<Integer>());
+            for(Integer i : row) {
+                mClock.get(0).add(i);
+            }
             for (int i = 1; i < this.vc.size() - hDistAndIndex[0] + 1; i++) {
-                mClock.set(i, this.vc.get(hDistAndIndex[0]-1+i));
+                row.clear();
+                for (Integer j : this.vc.get(hDistAndIndex[0]-1+i)) {
+                    row.add(j);
+                }
+                mClock.add(new ArrayList<Integer>());
+                for(Integer j : row) {
+                    mClock.get(i).add(j);
+                }
             }
             m = new Message(mClock, this.id);
         }
         else {
             m = new Message(this.vc, this.id);
-        }
-        try {
-            Registry registry = LocateRegistry.getRegistry(this.ports[id]);
-            stub = (ProcessRMI) registry.lookup("Process");
-            stub.Receive(m);
-        } catch (Exception e) {
-            return null;
         }
         return m;
     }
@@ -76,6 +62,7 @@ public class Process implements ProcessRMI {
     public void Receive(Message m) {
         assert(this.initialized);
         int idx = vc.size() - m.clock.size();
+        this.vc.get(0).set(this.localIdx, this.vc.get(0).get(this.localIdx) + 1);
         for (ArrayList<Integer> arr : m.clock) {
             int nodeIdx = 0;
             for (Integer i : arr) {
@@ -88,7 +75,7 @@ public class Process implements ProcessRMI {
 
     public void InternalEvent() {
         assert(this.initialized);
-        this.vc.get(0).set(this.id, this.vc.get(0).get(this.localIdx) + 1);
+        this.vc.get(0).set(this.localIdx, this.vc.get(0).get(this.localIdx) + 1);
     }
 
     public Process GetProcess() {
@@ -103,6 +90,7 @@ public class Process implements ProcessRMI {
             return new int[] {dist, idx};
         }
         else {
+            dist = 2;
             ProcessGroup a = sender.parent;
             idx = a.localIdx;
             ProcessGroup b = receiver.parent;
@@ -121,7 +109,6 @@ public class Process implements ProcessRMI {
     }
 
     public void initializeClock() {
-        System.out.println("ProcessID: " + this.id);
         ProcessGroup current = this.parent;
         for (int i = 0; i < height; i++) {
             vc.add(new ArrayList<Integer>(current.groupSize()));
@@ -130,7 +117,6 @@ public class Process implements ProcessRMI {
             }
             current = current.parent;
         }
-        //System.out.println(vc);
         this.initialized = true;
     }
 }
